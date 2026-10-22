@@ -125,8 +125,6 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 .wx-row .link { font-size: 14px; color: var(--accent); white-space: nowrap; }
 
 /* 라임 태그, 헤더 버튼 */
-.tag { background: var(--lime); color: var(--lime-fg); border-radius: 999px; padding: 1px 10px; font-weight: 500; }
-.meta .tag { font-size: 12px; }
 .thumbs .more { background: var(--lime); color: var(--lime-fg); font-weight: 600; }
 .top-actions { display: flex; align-items: center; gap: 8px; }
 .icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--muted); display: grid; place-items: center; }
@@ -136,8 +134,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 .reader { padding-bottom: 24px; }
 .r-date { margin: 8px 0 6px; font: 700 26px/1.35 var(--font-display); text-wrap: balance; }
 .r-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.r-meta .m + .m:not(.tag)::before { content: "·"; margin-right: 8px; }
-.r-meta .tag { font-size: 13px; }
+.r-meta .m + .m::before { content: "·"; margin-right: 8px; }
 .r-text { margin: 22px 0 0; font: 400 18px/1.95 var(--font-display); white-space: pre-wrap; overflow-wrap: anywhere; }
 .r-photos { margin-top: 26px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
 .r-photos button { display: block; width: 100%; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--chip); }
@@ -365,7 +362,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
       if (w || e.temp !== '' && e.temp != null) {
         meta.appendChild(el('span', null, (w ? w[1] + ' ' + w[2] : '') + (e.temp !== '' && e.temp != null ? (w ? ' ' : '') + e.temp + '°C' : '')));
       }
-      if (e.place) meta.appendChild(el('span', 'tag', '📍 ' + e.place));
+      if (e.place) meta.appendChild(el('span', null, '📍 ' + e.place));
       body.appendChild(meta);
       if (e.text) body.appendChild(el('p', 'excerpt', e.text));
       var ph = e.photos || [];
@@ -560,7 +557,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     var meta = el('p', 'r-meta'); meta.appendChild(el('span', 'm', fTime.format(d)));
     var w = WMAP[o.weather], wt = (w ? w[1] + ' ' + w[2] : '') + (o.temp !== '' ? (w ? ' ' : '') + o.temp + '°C' : '');
     if (wt) meta.appendChild(el('span', 'm', wt));
-    if (o.place) meta.appendChild(el('span', 'm tag', '📍 ' + o.place));
+    if (o.place) meta.appendChild(el('span', 'm', '📍 ' + o.place));
     r.appendChild(meta);
     if (o.text) r.appendChild(el('div', 'r-text', o.text));
     var n = o.photos.length;
