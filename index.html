@@ -14,9 +14,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="preload" href="fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 :root { color-scheme: light; }
+@font-face { font-family: 'Pretendard Variable'; font-style: normal; font-weight: 45 920; font-display: swap; src: url('fonts/PretendardVariable.woff2') format('woff2-variations'), url('fonts/PretendardVariable.woff2') format('woff2'); }
 [hidden] { display: none !important; }
 html { background: var(--bg); padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); overscroll-behavior-y: none; -webkit-text-size-adjust: 100%; }
 body { margin: 0; }
@@ -29,18 +30,18 @@ input[type="datetime-local"].input { -webkit-appearance: none; appearance: none;
 :root {
   --bg: #E8E0EF; --surface: #F7F1FA; --fg: #24182A; --muted: #726579;
   --line: #CFC6D5; --accent: #783DDE; --accent-fg: #FFFFFF; --chip: #E9DDF7;
-  --lime: #B9EA4C; --lime-fg: #24182A; --danger: #AE3E2D;
-  --font-display: 'Gowun Batang', 'Noto Serif KR', serif;
-  --font-body: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+  --lime: #B9EA4C; --lime-fg: #24182A; --danger: #B3365A;
+  --font-body: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+  --font-display: var(--font-body);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #100C13; --surface: #1D1622; --fg: #F4EEF4; --muted: #AA9EAA; --line: #343037; --accent: #A56BFF; --accent-fg: #100C13; --chip: #332445; --lime: #C8F45A; --lime-fg: #14110F; --danger: #E58B79;
+    --bg: #100C13; --surface: #1D1622; --fg: #F4EEF4; --muted: #AA9EAA; --line: #343037; --accent: #A56BFF; --accent-fg: #100C13; --chip: #332445; --lime: #C8F45A; --lime-fg: #14110F; --danger: #FF7A9C;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #100C13; --surface: #1D1622; --fg: #F4EEF4; --muted: #AA9EAA; --line: #343037; --accent: #A56BFF; --accent-fg: #100C13; --chip: #332445; --lime: #C8F45A; --lime-fg: #14110F; --danger: #E58B79;
+  --bg: #100C13; --surface: #1D1622; --fg: #F4EEF4; --muted: #AA9EAA; --line: #343037; --accent: #A56BFF; --accent-fg: #100C13; --chip: #332445; --lime: #C8F45A; --lime-fg: #14110F; --danger: #FF7A9C;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -79,7 +80,7 @@ button { cursor: pointer; }
 .day b { display: block; font: 700 28px/1 var(--font-display); font-variant-numeric: tabular-nums; }
 .day span { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.excerpt { margin: 4px 0 0; font: 400 16px/1.75 var(--font-display); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
+.excerpt { margin: 4px 0 0; font: 400 16px/1.7 var(--font-display); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
 .thumbs { display: flex; gap: 6px; margin-top: 10px; }
 .thumbs img, .thumbs .more { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; background: var(--chip); }
 .thumbs .more { display: grid; place-items: center; font-size: 13px; color: var(--muted); }
@@ -109,7 +110,7 @@ button { cursor: pointer; }
 .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--chip); color: var(--fg); font-weight: 600; }
 .temp { display: flex; align-items: center; gap: 8px; }
 .temp .input { width: 110px; }
-textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/1.9 var(--font-display); }
+textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/1.85 var(--font-display); }
 .photo-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
 .btn svg { width: 18px; height: 18px; }
@@ -135,7 +136,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 .r-date { margin: 8px 0 6px; font: 700 26px/1.35 var(--font-display); text-wrap: balance; }
 .r-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .r-meta .m + .m::before { content: "·"; margin-right: 8px; }
-.r-text { margin: 22px 0 0; font: 400 18px/1.95 var(--font-display); white-space: pre-wrap; overflow-wrap: anywhere; }
+.r-text { margin: 22px 0 0; font: 400 18px/1.9 var(--font-display); white-space: pre-wrap; overflow-wrap: anywhere; }
 .r-photos { margin-top: 26px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
 .r-photos button { display: block; width: 100%; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--chip); }
 .r-photos img { display: block; width: 100%; height: 100%; object-fit: cover; }
