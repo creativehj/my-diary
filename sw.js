@@ -1,5 +1,5 @@
 // 앱 껍데기를 저장해 두어 인터넷 없이도 열리게 합니다. 일기 데이터는 여기가 아니라 IndexedDB에 있습니다.
-const V = 'diary-shell-v3';
+const V = 'diary-shell-v4';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
