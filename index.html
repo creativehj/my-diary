@@ -105,6 +105,13 @@ button { cursor: pointer; }
 .bar .title { font: 700 18px/1 var(--font-display); }
 .link { background: none; border: 0; padding: 8px 4px; color: var(--muted); font-size: 16px; }
 .primary { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 999px; padding: 8px 20px; font-weight: 600; }
+.primary:disabled { background: var(--chip); color: var(--muted); cursor: default; }
+.input:disabled { opacity: 1; color: var(--fg); -webkit-text-fill-color: var(--fg); }
+.editor.view .input { background: transparent; border-color: transparent; padding-left: 0; padding-right: 0; }
+.editor.view textarea.input { padding-top: 6px; }
+.editor.view .chip { background: transparent; border-color: var(--line); }
+.editor.view .chip[aria-pressed="false"], .editor.view .wx-row, .editor.view .photo-actions { display: none; }
+.editor.view .chips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .field { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
 .label { font-size: 13px; font-weight: 500; color: var(--muted); }
 .input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); min-height: 44px; }
@@ -171,6 +178,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
       <button class="link" id="closeBtn" type="button">닫기</button>
       <span class="title" id="editorTitle">새 일기</span>
       <button class="primary" id="saveBtn" type="button">저장</button>
+      <button class="primary" id="editBtn" type="button" hidden>수정</button>
     </div>
 
     <div class="field">
@@ -178,18 +186,18 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
       <input class="input" id="when" type="datetime-local">
     </div>
 
-    <div class="field">
+    <div class="field" id="fWeather">
       <span class="label">날씨</span>
       <div class="chips" id="chips" role="group" aria-label="날씨 선택"></div>
       <div class="wx-row"><span class="wx-status" id="wxStatus" role="status"></span><button class="link" id="wxBtn" type="button">현재 날씨·장소 불러오기</button></div>
     </div>
 
-    <div class="field">
+    <div class="field" id="fTemp">
       <label class="label" for="temp">기온 (선택)</label>
       <div class="temp"><input class="input" id="temp" type="number" inputmode="decimal" step="1" min="-60" max="60" placeholder="예: 14"><span>°C</span></div>
     </div>
 
-    <div class="field">
+    <div class="field" id="fPlace">
       <label class="label" for="place">장소 (선택)</label>
       <input class="input" id="place" type="text" placeholder="예: 마포구 서교동, 집, 카페" autocomplete="off" enterkeyhint="done">
     </div>
@@ -199,7 +207,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
       <textarea class="input" id="text" placeholder="오늘은 어떤 하루였나요?"></textarea>
     </div>
 
-    <div class="field">
+    <div class="field" id="fPhoto">
       <span class="label">사진</span>
       <div class="photo-actions">
         <button class="btn" id="camBtn" type="button">
@@ -344,9 +352,11 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
       var b = el('button', 'chip'); b.type = 'button';
       b.setAttribute('aria-pressed', draft.weather === w[0] ? 'true' : 'false');
       b.appendChild(el('i', null, w[1])); b.appendChild(document.createTextNode(w[2]));
-      b.addEventListener('click', function () { draft.weather = draft.weather === w[0] ? '' : w[0]; draft.dirty = true; renderChips(); });
+      b.disabled = draft.mode !== 'edit';
+      b.addEventListener('click', function () { if (draft.mode !== 'edit') return; draft.weather = draft.weather === w[0] ? '' : w[0]; draft.dirty = true; renderChips(); });
       box.appendChild(b);
     });
+    updateSave();
   }
   function renderShots() {
     revokeAll(shotUrls);
@@ -356,10 +366,11 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
       var s = el('div', 'shot'), im = el('img'); im.src = u; im.alt = '첨부한 사진 ' + (i + 1);
       var x = el('button', null, '×'); x.type = 'button'; x.setAttribute('aria-label', '사진 ' + (i + 1) + ' 지우기');
       x.addEventListener('click', function () { draft.photos.splice(i, 1); draft.dirty = true; renderShots(); });
-      s.appendChild(im); s.appendChild(x); g.appendChild(s);
+      s.appendChild(im); if (draft.mode === 'edit') s.appendChild(x); g.appendChild(s);
     });
+    updateSave();
   }
-  function autosize() { var t = $('text'); t.style.height = 'auto'; t.style.height = Math.max(240, t.scrollHeight + 2) + 'px'; }
+  function autosize() { var t = $('text'); t.style.height = 'auto'; t.style.height = Math.max(draft && draft.mode === 'view' ? 60 : 240, t.scrollHeight + 2) + 'px'; }
 
   var closeTimer = null, delTimer = null;
   function resetConfirms() {
@@ -370,11 +381,12 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     resetConfirms();
     draft = e ? { id: e.id, isNew: false, at: e.at, weather: e.weather || '', temp: e.temp == null ? '' : String(e.temp), text: e.text || '', photos: (e.photos || []).slice(), dirty: false }
               : { id: uid(), isNew: true, at: Date.now(), weather: '', temp: '', text: '', photos: [], dirty: false };
-    $('editorTitle').textContent = e ? '일기 수정' : '새 일기';
     $('when').value = toLocalInput(draft.at);
     $('temp').value = draft.temp; $('text').value = draft.text; $('place').value = e ? (e.place || '') : '';
-    $('hint').textContent = ''; $('delBtn').hidden = !e;
-    renderChips(); renderShots();
+    $('hint').textContent = '';
+    draft.mode = e ? 'view' : 'edit';
+    draft.orig = e ? { at: e.at, weather: e.weather || '', temp: e.temp == null ? '' : String(e.temp), place: e.place || '', text: e.text || '', photos: (e.photos || []).slice() } : null;
+    applyMode();
     $('wxStatus').textContent = '';
     $('editor').hidden = false; $('editor').scrollTop = 0; document.body.style.overflow = 'hidden';
     autosize();
@@ -471,6 +483,42 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
       return chain.then(function () { renderList(); status(added + '개의 일기를 불러왔어요.'); });
     }).catch(function () { status('이 파일은 불러올 수 없어요. 이 앱에서 저장한 백업 파일인지 확인해 주세요.'); });
   }
+
+  /* 읽기 모드와 수정 모드 */
+  function changed() {
+    var o = draft && draft.orig;
+    if (!o) return false;
+    if ($('when').value !== toLocalInput(o.at)) return true;
+    if (draft.weather !== o.weather) return true;
+    if ($('temp').value.trim() !== o.temp) return true;
+    if ($('place').value.trim() !== o.place) return true;
+    if ($('text').value.trim() !== o.text.trim()) return true;
+    if (draft.photos.length !== o.photos.length) return true;
+    for (var i = 0; i < o.photos.length; i++) if (draft.photos[i] !== o.photos[i]) return true;
+    return false;
+  }
+  function updateSave() {
+    if (!draft) return;
+    var edit = draft.mode === 'edit';
+    $('saveBtn').hidden = !edit; $('editBtn').hidden = edit;
+    $('saveBtn').disabled = !(draft.isNew ? ($('text').value.trim() !== '' || draft.photos.length > 0) : changed());
+  }
+  function applyMode() {
+    var edit = draft.mode === 'edit';
+    $('editor').classList.toggle('view', !edit);
+    $('editorTitle').textContent = draft.isNew ? '새 일기' : (edit ? '일기 수정' : '일기');
+    $('when').disabled = !edit;
+    ['temp', 'place', 'text'].forEach(function (id) { $(id).readOnly = !edit; });
+    $('delBtn').hidden = draft.isNew || !edit;
+    $('fWeather').hidden = !edit && !draft.weather;
+    $('fTemp').hidden = !edit && $('temp').value === '';
+    $('fPlace').hidden = !edit && $('place').value === '';
+    $('fPhoto').hidden = !edit && !draft.photos.length;
+    resetConfirms(); renderChips(); renderShots(); autosize();
+  }
+  $('editBtn').addEventListener('click', function () { if (draft) { draft.mode = 'edit'; applyMode(); } });
+  ['text', 'when', 'temp', 'place'].forEach(function (id) { $(id).addEventListener('input', updateSave); });
+  $('when').addEventListener('change', updateSave);
 
   /* ---------- 파일 저장, 날씨, 설치 ---------- */
   function saveFile(name, json) {
@@ -579,7 +627,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
   $('when').addEventListener('input', function () { if (draft) draft.dirty = true; });
   $('temp').addEventListener('input', function () { if (draft) draft.dirty = true; });
   $('closeBtn').addEventListener('click', function () {
-    if (draft && draft.dirty && $('closeBtn').textContent === '닫기') {
+    if (draft && draft.mode === 'edit' && (draft.isNew ? draft.dirty : changed()) && $('closeBtn').textContent === '닫기') {
       $('closeBtn').textContent = '저장 안 하고 닫기';
       closeTimer = setTimeout(function () { $('closeBtn').textContent = '닫기'; }, 3000); return;
     }
