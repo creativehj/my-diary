@@ -129,6 +129,9 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 .topic-card .why { margin: -6px 0 12px; font-size: 13px; color: var(--muted); }
 .topic-card .row { display: flex; gap: 8px; align-items: center; }
 .topic-card .use { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 10px; padding: 10px 16px; min-height: 44px; font-weight: 600; }
+.topic-list { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 0 -4px; padding: 0 4px; }
+.topic-list button { flex-shrink: 0; text-align: left; padding: 12px 14px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); line-height: 1.5; word-break: keep-all; }
+.topic-list-btn { align-self: flex-start; font-size: 14px; }
 .hint { min-height: 1.4em; margin: 10px 0 0; font-size: 14px; color: var(--danger); }
 .danger { margin-top: 28px; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: none; color: var(--danger); }
 
@@ -245,19 +248,6 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 
     <div id="reader" class="reader" hidden></div>
     <div id="form">
-    <div class="field" id="fTopic" style="margin-top:4px">
-      <span class="label">오늘의 주제 (선택)</span>
-      <button class="btn topic-btn" id="topicBtn" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><circle cx="9" cy="15" r="1" fill="currentColor"/></svg>
-        주제 뽑기
-      </button>
-      <div class="topic-card" id="topicCard" hidden>
-        <p class="q" id="topicQ"></p>
-        <p class="why" id="topicWhy"></p>
-        <div class="row"><button class="use" id="topicUse" type="button">이걸로 쓰기</button><button class="link" id="topicAgain" type="button">다시 뽑기</button></div>
-      </div>
-    </div>
-
     <div class="field">
       <label class="label" for="when">날짜와 시간</label>
       <input class="input" id="when" type="datetime-local">
@@ -277,6 +267,20 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     <div class="field" id="fPlace">
       <label class="label" for="place">장소 (선택)</label>
       <input class="input" id="place" type="text" placeholder="예: 마포구 서교동, 집, 카페" autocomplete="off" enterkeyhint="done">
+    </div>
+
+    <div class="field" id="fTopic">
+      <span class="label">오늘의 주제 (선택)</span>
+      <button class="btn topic-btn" id="topicBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><circle cx="9" cy="15" r="1" fill="currentColor"/></svg>
+        주제 뽑기
+      </button>
+      <button class="link topic-list-btn" id="topicListBtn" type="button">질문 목록 보기</button>
+      <div class="topic-card" id="topicCard" hidden>
+        <p class="q" id="topicQ"></p>
+        <p class="why" id="topicWhy"></p>
+        <div class="row"><button class="use" id="topicUse" type="button">이걸로 쓰기</button><button class="link" id="topicAgain" type="button">다시 뽑기</button></div>
+      </div>
     </div>
 
     <div class="field">
@@ -340,6 +344,15 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     </div>
     <div id="calBody"></div>
     <div class="cal-foot"><button class="btn" id="calTop" type="button">맨 위로</button><button class="link" id="calClose" type="button">닫기</button></div>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="topicWrap" hidden style="z-index:60">
+  <div class="sheet" role="dialog" aria-label="질문 목록">
+    <h2>질문 목록</h2>
+    <p>누르면 그 질문으로 쓰기 시작해요. 날씨·시간·내 일기에 맞춘 질문은 뽑을 때마다 따로 만들어져요.</p>
+    <div class="topic-list" id="topicList"></div>
+    <div class="cal-foot"><span></span><button class="link" id="topicListClose" type="button">닫기</button></div>
   </div>
 </div>
 
@@ -799,6 +812,31 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
   $('topicAgain').addEventListener('click', showTopic);
   $('topicUse').addEventListener('click', useTopic);
   function resetTopic() { topic = null; $('topicCard').hidden = true; $('topicBtn').hidden = false; $('topicBtn').lastChild.textContent = ' 주제 뽑기'; }
+
+  function openTopicList() {
+    var box = $('topicList'); box.textContent = '';
+    TOPICS.concat(T_RAIN, T_SUN, T_COLD, T_SNOW, T_CLOUD, T_MORN, T_NIGHT).forEach(function (q) {
+      var b = el('button', null, q); b.type = 'button';
+      b.addEventListener('click', function () { topic = { q: q, why: '' }; $('topicWrap').hidden = true; useTopic(); });
+      box.appendChild(b);
+    });
+    $('topicWrap').hidden = false; box.scrollTop = 0;
+  }
+  $('topicListBtn').addEventListener('click', openTopicList);
+  $('topicListClose').addEventListener('click', function () { $('topicWrap').hidden = true; });
+  $('topicWrap').addEventListener('click', function (e) { if (e.target === $('topicWrap')) $('topicWrap').hidden = true; });
+  /* 읽기 화면에서 왼쪽→오른쪽으로 밀면 닫기 */
+  (function () {
+    var sx = 0, sy = 0, on = false;
+    var ed = $('editor');
+    ed.addEventListener('touchstart', function (e) { on = !!draft && draft.mode === 'view' && $('lightbox').hidden && e.touches.length === 1; if (on) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive: true });
+    ed.addEventListener('touchend', function (e) {
+      if (!on) return; on = false;
+      var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (dx > 80 && Math.abs(dy) < 60 && dx > Math.abs(dy) * 2 && draft && draft.mode === 'view') closeEditor();
+    }, { passive: true });
+    ed.addEventListener('touchcancel', function () { on = false; }, { passive: true });
+  })();
 
   var closeTimer = null, delTimer = null;
   function resetConfirms() {
