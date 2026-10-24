@@ -123,6 +123,12 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 .shot { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--chip); }
 .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .shot button { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.62); color: #fff; font-size: 16px; line-height: 1; }
+.topic-btn { align-self: flex-start; }
+.topic-card { margin-top: 8px; padding: 14px 16px; border-radius: 12px; background: var(--chip); border: 1px solid var(--line); }
+.topic-card .q { margin: 0 0 12px; font-size: 17px; line-height: 1.55; font-weight: 600; word-break: keep-all; }
+.topic-card .why { margin: -6px 0 12px; font-size: 13px; color: var(--muted); }
+.topic-card .row { display: flex; gap: 8px; align-items: center; }
+.topic-card .use { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 10px; padding: 10px 16px; min-height: 44px; font-weight: 600; }
 .hint { min-height: 1.4em; margin: 10px 0 0; font-size: 14px; color: var(--danger); }
 .danger { margin-top: 28px; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: none; color: var(--danger); }
 
@@ -239,6 +245,19 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 
     <div id="reader" class="reader" hidden></div>
     <div id="form">
+    <div class="field" id="fTopic" style="margin-top:4px">
+      <span class="label">오늘의 주제 (선택)</span>
+      <button class="btn topic-btn" id="topicBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><circle cx="9" cy="15" r="1" fill="currentColor"/></svg>
+        주제 뽑기
+      </button>
+      <div class="topic-card" id="topicCard" hidden>
+        <p class="q" id="topicQ"></p>
+        <p class="why" id="topicWhy"></p>
+        <div class="row"><button class="use" id="topicUse" type="button">이걸로 쓰기</button><button class="link" id="topicAgain" type="button">다시 뽑기</button></div>
+      </div>
+    </div>
+
     <div class="field">
       <label class="label" for="when">날짜와 시간</label>
       <input class="input" id="when" type="datetime-local">
@@ -672,6 +691,115 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
   }
   function autosize() { var t = $('text'); t.style.height = 'auto'; t.style.height = Math.max(draft && draft.mode === 'view' ? 60 : 240, t.scrollHeight + 2) + 'px'; }
 
+
+  /* ---------- 오늘의 주제 (기기 안에서만 만듭니다) ---------- */
+  var TOPICS = [
+    '오늘 가장 오래 눈에 남은 장면은 무엇이었나요?', '오늘 먹은 것 중 기억에 남는 맛이 있나요?', '오늘 누구와 가장 많은 말을 했나요? 어떤 이야기였나요?',
+    '오늘 나를 웃게 만든 작은 일은 무엇이었나요?', '오늘 하지 않아도 됐는데 해서 잘했다 싶은 일이 있나요?', '오늘 마음이 가장 무거웠던 순간은 언제였나요?',
+    '오늘 하루를 한 단어로 말한다면? 그 이유는요?', '요즘 자꾸 떠오르는 사람이 있나요? 왜 떠오를까요?', '요즘 내가 미루고 있는 일은 무엇인가요?',
+    '지금 내 방에서 가장 마음에 드는 물건은 무엇인가요?', '어제의 나에게 한마디 해준다면?', '내일의 나에게 부탁하고 싶은 것은 무엇인가요?',
+    '요즘 반복해서 듣는 노래나 소리가 있나요?', '오늘 몸은 어땠나요? 어디가 편했고 어디가 불편했나요?', '최근에 처음 해본 일이 있나요?',
+    '오늘 들은 말 중에 마음에 남은 한마디는 무엇인가요?', '요즘 나를 가장 지치게 하는 것은 무엇인가요?', '요즘 나를 가장 쉬게 해주는 것은 무엇인가요?',
+    '오늘 가장 잘 쓴 시간은 언제였나요?', '오늘 가장 아깝게 쓴 시간은 언제였나요?', '지금 가장 사고 싶은 것과 그 이유는요?',
+    '어릴 때 좋아했는데 지금은 잊고 있던 것이 있나요?', '오늘 걸으면서 무슨 생각을 했나요?', '요즘 내가 자주 하는 걱정은 무엇인가요? 그 걱정은 정말 일어날까요?',
+    '오늘 고마웠던 사람이나 일을 세 가지 적어 본다면?', '오늘 내가 참았던 말이 있나요?', '지금 이 순간 들리는 소리를 모두 적어 본다면?',
+    '1년 뒤에 이 시기를 떠올리면 무엇이 기억날 것 같나요?', '요즘 내가 바라는 하루는 어떤 모습인가요?', '요즘 가장 자주 쓰는 말버릇은 무엇인가요?',
+    '오늘 내가 한 선택 중 가장 작지만 의미 있던 것은 무엇인가요?', '오늘 나에게 해준 가장 다정한 일은 무엇인가요?', '오늘 기대했던 것과 실제는 어떻게 달랐나요?',
+    '요즘 시간이 가장 빨리 가는 순간은 언제인가요?', '요즘 가장 느리게 가는 시간은 언제인가요?', '최근에 본 것(영상, 책, 글) 중 오래 남은 것은 무엇인가요?',
+    '지금 내가 가장 원하는 한 가지는 무엇인가요?', '오늘 마주친 낯선 사람 중 기억나는 사람이 있나요?', '오늘의 나는 어떤 색이었나요?',
+    '이번 주에 잘 지켜낸 것은 무엇인가요?', '요즘 나는 어떤 사람이 되고 싶은가요?', '내가 요즘 가장 자주 있는 장소는 어디인가요? 그곳에서의 나는 어떤가요?'
+  ];
+  var T_RAIN = ['비 오는 날의 소리와 냄새를 적어 본다면?', '비가 오면 떠오르는 기억이 있나요?', '오늘 비를 맞았다면 어떤 기분이었나요? 맞지 않았다면 창밖은 어땠나요?'];
+  var T_SUN = ['오늘 하늘은 어떤 모습이었나요?', '햇빛이 가장 좋았던 순간은 언제였나요?', '이런 날씨에 하고 싶었던 일은 무엇이었나요?'];
+  var T_COLD = ['오늘 가장 따뜻했던 순간은 언제였나요?', '추운 날 생각나는 음식이나 장소가 있나요?'];
+  var T_SNOW = ['눈이 오면 가장 먼저 하고 싶은 일은 무엇인가요?'];
+  var T_CLOUD = ['오늘 같은 흐린 날, 마음은 어땠나요?', '흐린 날엔 어떤 음악이나 음식이 어울리나요?'];
+  var T_MORN = ['오늘 아침 눈을 뜨고 처음 든 생각은 무엇이었나요?', '아침에 가장 먼저 한 일은 무엇이었나요?'];
+  var T_NIGHT = ['잠들기 전 오늘 하루를 돌아본다면, 한 장면만 고른다면요?', '오늘 밤 내 마음은 어떤가요?', '오늘 하루 중 다시 돌려보고 싶은 순간은 언제인가요?'];
+  var T_SEASON = { 3: '봄이 오고 있어요. 요즘 달라졌다고 느끼는 것은 무엇인가요?', 4: '요즘 바깥 공기에서 가장 달라진 점은 무엇인가요?', 9: '선선해진 요즘, 계절이 바뀌는 걸 어디서 느끼나요?', 10: '가을이 깊어요. 올가을에 꼭 하고 싶은 것은 무엇인가요?', 11: '한 해가 저물어 가요. 올해 가장 기억에 남는 일은 무엇인가요?', 12: '올해를 정리한다면 한 문장으로 무엇이라 쓰고 싶나요?', 1: '새해에 마음에 두고 있는 것은 무엇인가요?', 6: '한 해의 절반이 지났어요. 지금까지 가장 달라진 점은 무엇인가요?', 7: '더운 날 가장 시원했던 순간은 언제였나요?' };
+  var STOP = {};
+  '일기 번째 테스트 기록 오늘 어제 내일 그리고 그래서 하지만 그런데 너무 정말 진짜 조금 많이 하루 생각 느낌 사람 시간 이후 아주 다시 같은 이번 그냥 계속 먼저 바로 아직 이미 오히려 정도'.split(' ').forEach(function (w) { STOP[w] = 1; });
+  function stem(w) { var m = w.match(/^(.{2,}?)(에서는|에서|으로|까지|부터|이랑|이나|처럼|보다|에게|한테|이다|했다|한다|했던|하는|해서|하고|이고|이는|에는|에도|을|를|은|는|이|가|도|에|의|과|와|로|만|고|서)$/); return m ? m[1] : w; }
+  var recentTopics = [];
+  function daysAgoLabel(ms) { var d = Math.round((Date.now() - ms) / 86400000); return d <= 0 ? '오늘' : d + '일 전'; }
+  function snip(t, n) { t = t.replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n).replace(/\s\S*$/, '') + '…' : t; }
+  function topicCandidates() {
+    var gen = [], mine = [];
+    var now = draft && draft.at ? new Date(draft.at) : new Date(), h = now.getHours(), mo = now.getMonth() + 1;
+    var wx = draft ? draft.weather : '';
+    var pool = TOPICS.slice();
+    if (wx === 'rain' || wx === 'storm') pool = pool.concat(T_RAIN, T_RAIN);
+    else if (wx === 'sunny' || wx === 'partly') pool = pool.concat(T_SUN, T_SUN);
+    else if (wx === 'snow') pool = pool.concat(T_SNOW, T_SNOW, T_COLD);
+    else if (wx === 'cloudy' || wx === 'fog') pool = pool.concat(T_CLOUD, T_CLOUD);
+    var tp = draft && draft.temp !== '' ? Number(draft.temp) : null;
+    if (tp != null && !isNaN(tp) && tp <= 5) pool = pool.concat(T_COLD, T_COLD);
+    if (h >= 5 && h < 11) pool = pool.concat(T_MORN, T_MORN); else if (h >= 20 || h < 3) pool = pool.concat(T_NIGHT, T_NIGHT);
+    if (T_SEASON[mo]) pool.push(T_SEASON[mo], T_SEASON[mo]);
+    pool.forEach(function (q) { gen.push({ q: q, why: '' }); });
+
+    var list = entries.filter(function (e) { return !draft || e.id !== draft.id; });
+    if (list.length) {
+      /* 1년 전 오늘 (±3일) */
+      list.forEach(function (e) {
+        var d = new Date(e.at), y = now.getFullYear() - d.getFullYear();
+        if (y >= 1 && e.text) {
+          var same = new Date(d); same.setFullYear(now.getFullYear());
+          if (Math.abs(same - now) <= 3 * 86400000) mine.push({ q: y + '년 전 이맘때 이렇게 썼어요: “' + snip(e.text, 40) + '” 지금은 어떤가요?', why: fLong.format(d) + '의 일기에서', w: 3 });
+        }
+      });
+      /* 자주 가는 장소 */
+      var pc = {}; list.forEach(function (e) { if (e.place) pc[e.place] = (pc[e.place] || 0) + 1; });
+      Object.keys(pc).forEach(function (k) { if (pc[k] >= 3) mine.push({ q: k + '에서 일기를 자주 쓰셨네요. 요즘 그곳은 어떤가요?', why: '내 일기 속 장소에서', w: 1 }); });
+      /* 자주 쓴 단어 */
+      var wc = {}, last = {};
+      list.forEach(function (e) {
+        var seen = {};
+        ((e.text || '').match(/[가-힣]{2,}/g) || []).forEach(function (w) {
+          w = stem(w); if (w.length < 2 || STOP[w] || seen[w] || /(다|고|어|아|해|서|으|게|니|요|지|면|며|듯|리|던|은|는|한|된|인|할|함|임|럼|께|도|만|나|을|를|이|가|에)$/.test(w)) return; seen[w] = 1; wc[w] = (wc[w] || 0) + 1; if (!last[w] || last[w] < e.at) last[w] = e.at;
+        });
+      });
+      Object.keys(wc).forEach(function (k) { if (wc[k] >= 4 && wc[k] / list.length >= 0.05) mine.push({ q: '“' + k + '” — 일기에 자주 나오는 말이에요. 요즘 이 말에 얽힌 일이 있나요?', why: '내 일기 속 단어에서', w: 1 }); });
+      /* 마지막으로 쓴 일기 */
+      var lastE = list.slice().sort(function (a, b) { return b.at - a.at; })[0];
+      if (lastE && lastE.text && Date.now() - lastE.at > 3600000) mine.push({ q: daysAgoLabel(lastE.at) + ' 쓴 일기는 “' + snip(lastE.text, 36) + '”였어요. 그 뒤로 달라진 점이 있나요?', why: '가장 최근 일기에서', w: 1 });
+    }
+    return { gen: gen, mine: mine };
+  }
+  function pickTopic() {
+    var c = topicCandidates(), pick;
+    for (var tries = 0; tries < 12; tries++) {
+      var usePersonal = c.mine.length && Math.random() < 0.45;
+      if (usePersonal) {
+        var bag = []; c.mine.forEach(function (m) { for (var i = 0; i < (m.w || 1); i++) bag.push(m); });
+        pick = bag[Math.floor(Math.random() * bag.length)];
+      } else pick = c.gen[Math.floor(Math.random() * c.gen.length)];
+      if (recentTopics.indexOf(pick.q) < 0) break;
+    }
+    recentTopics.push(pick.q); if (recentTopics.length > 30) recentTopics.shift();
+    return pick;
+  }
+  var topic = null;
+  function showTopic() {
+    topic = pickTopic();
+    $('topicQ').textContent = topic.q; $('topicWhy').textContent = topic.why; $('topicWhy').hidden = !topic.why;
+    $('topicCard').hidden = false; $('topicBtn').hidden = true;
+  }
+  function useTopic() {
+    if (!topic || !draft) return;
+    var t = $('text'), line = 'Q. ' + topic.q, cur = t.value;
+    if (draft.topicLine && cur.indexOf(draft.topicLine) === 0) cur = cur.slice(draft.topicLine.length).replace(/^\n+/, '');
+    draft.topicLine = line;
+    t.value = line + '\n\n' + cur; draft.dirty = true;
+    updateSave(); autosize();
+    try { t.focus(); t.setSelectionRange(t.value.length, t.value.length); t.scrollTop = t.scrollHeight; } catch (x) {}
+    $('topicCard').hidden = true; $('topicBtn').hidden = false; $('topicBtn').lastChild.textContent = ' 다른 주제로 바꾸기';
+  }
+  $('topicBtn').addEventListener('click', showTopic);
+  $('topicAgain').addEventListener('click', showTopic);
+  $('topicUse').addEventListener('click', useTopic);
+  function resetTopic() { topic = null; $('topicCard').hidden = true; $('topicBtn').hidden = false; $('topicBtn').lastChild.textContent = ' 주제 뽑기'; }
+
   var closeTimer = null, delTimer = null;
   function resetConfirms() {
     clearTimeout(closeTimer); clearTimeout(delTimer);
@@ -695,6 +823,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     $('hint').textContent = '';
     draft.mode = e ? 'view' : 'edit';
     draft.orig = e ? { at: e.at, weather: e.weather || '', temp: e.temp == null ? '' : String(e.temp), place: e.place || '', text: e.text || '', photos: blobs.slice() } : null;
+    resetTopic(); $('fTopic').hidden = !!e;
     applyMode();
     $('wxStatus').textContent = '';
     $('editor').hidden = false; $('editor').scrollTop = 0; document.body.style.overflow = 'hidden';
