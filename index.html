@@ -905,6 +905,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     return true;
   }
   function saveDraft() {
+    if (draft.isNew && topic && !$('topicCard').hidden && !draft.topicLine) useTopic();
     var text = $('text').value.trim();
     if (!text && !draft.photos.length) { $('hint').textContent = '글이나 사진을 하나 이상 남겨 주세요.'; return; }
     var at = new Date($('when').value).getTime();
