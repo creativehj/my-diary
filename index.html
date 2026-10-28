@@ -917,7 +917,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     (photosChanged ? makeThumbs(photos).then(function (th) { return dbSaveEntry(meta, photos, th); }) : dbSaveEntry(meta, null, null)).then(function () {
       var i = entries.findIndex(function (x) { return x.id === meta.id; });
       if (i > -1) entries[i] = meta; else entries.push(meta);
-      closeEditor(); rebuild(true); toast('저장했어요');
+      closeEditor(); if (query.trim()) rebuild(true); else { rebuild(false); window.scrollTo(0, 0); } toast('저장했어요');
     }).catch(function () {
       $('hint').textContent = '저장하지 못했어요. 저장 공간이 부족할 수 있어요. 사진을 줄이고 다시 시도해 주세요.';
     }).then(function () { $('saveBtn').disabled = false; });
