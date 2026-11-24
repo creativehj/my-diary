@@ -630,15 +630,18 @@
       return Promise.all(made).then(function (list) { prepared = list; showBackupFiles(); status(''); });
     }).catch(function () { status('백업 파일을 만들지 못했어요.'); }).then(function () { $('exportBtn').disabled = false; });
   }
+  function resetBackup() { prepared = []; var o = $('bkOut'); o.textContent = ''; o.hidden = true; $('bkPw').value = ''; $('bkPw2').value = ''; $('exportBtn').disabled = false; }
   function showBackupFiles() {
     var out = $('bkOut'); out.textContent = ''; out.hidden = false;
     var total = prepared.reduce(function (s, p) { return s + p.blob.size; }, 0);
     out.appendChild(el('p', null, '파일 ' + prepared.length + '개 · 합계 ' + fmtSize(total) + (prepared[0] && prepared[0].enc ? ' · 🔒 암호화됨' : ' · 암호화 안 됨') + '. 아래 버튼을 눌러 파일 앱, iCloud Drive, 맥(AirDrop) 등으로 보내 주세요.'));
+    var cancel = el('button', 'link', '취소하고 닫기'); cancel.type = 'button'; cancel.addEventListener('click', function () { resetBackup(); status('백업을 취소했어요. 파일은 만들어지지 않았고 비밀번호도 지웠어요.'); });
     var all = el('button', 'btn', '모두 저장'); all.type = 'button'; all.addEventListener('click', function () { sendFiles(prepared); }); out.appendChild(all);
     if (prepared.length > 1) prepared.forEach(function (p) {
       var row = el('div', 'bk-row'); row.appendChild(el('span', null, p.name + ' (' + fmtSize(p.blob.size) + ', 일기 ' + p.count + '개)'));
       var b = el('button', 'btn', '저장'); b.type = 'button'; b.addEventListener('click', function () { sendFiles([p]); }); row.appendChild(b); out.appendChild(row);
     });
+    out.appendChild(cancel);
   }
   /* 2단계: 버튼을 누른 바로 그 순간에 공유 창을 엽니다. (아이폰은 시간이 지나면 공유 창을 막아요) */
   function sendFiles(list) {
@@ -949,8 +952,8 @@
     $('iosHint').hidden = isStandalone || !!deferredInstall || !/iphone|ipad/i.test(navigator.userAgent);
     $('sheetWrap').hidden = false;
   });
-  $('sheetClose').addEventListener('click', function () { $('sheetWrap').hidden = true; });
-  $('sheetWrap').addEventListener('click', function (e) { if (e.target === $('sheetWrap')) $('sheetWrap').hidden = true; });
+  $('sheetClose').addEventListener('click', function () { $('sheetWrap').hidden = true; resetBackup(); });
+  $('sheetWrap').addEventListener('click', function (e) { if (e.target === $('sheetWrap')) { $('sheetWrap').hidden = true; resetBackup(); } });
   $('exportBtn').addEventListener('click', doPrepare);
   $('importBtn').addEventListener('click', function () { $('importInput').click(); });
   $('importInput').addEventListener('change', function (e) { doImport(e.target.files); e.target.value = ''; });
