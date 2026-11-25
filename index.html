@@ -135,6 +135,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
 .topic-list-btn { align-self: flex-start; font-size: 14px; }
 .bk-pw { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 8px; }
 .bk-pw input { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; font-size: 16px; }
+.bk-cancel { display: block; width: 100%; margin-top: 8px; background: transparent; color: var(--danger); border: 1px solid var(--danger); }
 .bk-note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
 .hint { min-height: 1.4em; margin: 10px 0 0; font-size: 14px; color: var(--danger); }
 .danger { margin-top: 28px; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: none; color: var(--danger); }
@@ -342,7 +343,7 @@ textarea.input { min-height: 240px; resize: none; padding: 14px; font: 400 17px/
     </div>
     <input id="importInput" type="file" accept="" multiple hidden>
     <p class="status" id="sheetStatus" role="status"></p>
-    <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">앱 버전 13 · 2026-10-28</p>
+    <p id="verLabel" style="margin:8px 0 0;font-size:12px;color:var(--muted)"></p>
   </div>
 </div>
 

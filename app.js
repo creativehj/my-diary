@@ -635,7 +635,7 @@
     var out = $('bkOut'); out.textContent = ''; out.hidden = false;
     var total = prepared.reduce(function (s, p) { return s + p.blob.size; }, 0);
     out.appendChild(el('p', null, '파일 ' + prepared.length + '개 · 합계 ' + fmtSize(total) + (prepared[0] && prepared[0].enc ? ' · 🔒 암호화됨' : ' · 암호화 안 됨') + '. 아래 버튼을 눌러 파일 앱, iCloud Drive, 맥(AirDrop) 등으로 보내 주세요.'));
-    var cancel = el('button', 'link', '취소하고 닫기'); cancel.type = 'button'; cancel.addEventListener('click', function () { resetBackup(); status('백업을 취소했어요. 파일은 만들어지지 않았고 비밀번호도 지웠어요.'); });
+    var cancel = el('button', 'btn bk-cancel', '백업 취소하고 닫기'); cancel.type = 'button'; cancel.addEventListener('click', function () { resetBackup(); status('백업을 취소했어요. 파일은 만들어지지 않았고 비밀번호도 지웠어요.'); });
     var all = el('button', 'btn', '모두 저장'); all.type = 'button'; all.addEventListener('click', function () { sendFiles(prepared); }); out.appendChild(all);
     if (prepared.length > 1) prepared.forEach(function (p) {
       var row = el('div', 'bk-row'); row.appendChild(el('span', null, p.name + ' (' + fmtSize(p.blob.size) + ', 일기 ' + p.count + '개)'));
@@ -945,6 +945,7 @@
   $('camInput').addEventListener('change', function (e) { addFiles(e.target.files); e.target.value = ''; });
   $('pickInput').addEventListener('change', function (e) { addFiles(e.target.files); e.target.value = ''; });
 
+  $('verLabel').textContent = '앱 버전 14 (화면 코드 기준)';
   $('openBackup').addEventListener('click', function () {
     var last = null; try { last = localStorage.getItem('diary-last-backup'); } catch (e) {}
     status(entries.length + '개의 일기가 있어요.' + (last ? ' 마지막 백업: ' + new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric' }).format(new Date(Number(last))) : ' 아직 백업한 적이 없어요.'));
